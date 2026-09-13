@@ -245,9 +245,17 @@ a.forEach(t=>{
 let k=key(d,t);
 let done=!!state.done[k];
 
+let now=new Date();
+let [hh,mm]=t[0].split(":").map(Number);
+let taskTime=new Date(d);
+taskTime.setHours(hh,mm,0,0);
+
+let canComplete=done||now>=taskTime;
+
 html+=`
 <div class="row">
 <button class="check ${done?"done":""}"
+${canComplete?"":"disabled"}
 onclick="toggle('${k.replaceAll("'","\\'")}')">
 ${done?"✓":""}
 </button>
