@@ -22,5 +22,5 @@ jobs:
         env:
           PUSH_SUBSCRIPTION: ${{ secrets.PUSH_SUBSCRIPTION }}
           VAPID_PRIVATE_KEY: ${{ secrets.VAPID_PRIVATE_KEY }}
-          VAPID_PUBLIC_KEY: BHD3ENmNPEofYIEoktlUbtzj_tkR0VZDO9xlUSsyAlzSmA8LJ33GnnjErU0fc_hwyev5jqvv2Pu_3RVwu7N52vA
+          VAPID_PUBLIC_KEY: BCYUBwie6x40avpHbvjNeSwI0iI5xg8cjiDfpJsD6TFwmga7VpQX7ZUgRO4Kue3mT91WQQxkWfJKo88eX9il8WA
         run: node scripts/send-notification.js
