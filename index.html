@@ -61,6 +61,81 @@ input,select,textarea{background:#202127;color:var(--text);border-color:#383942}
 .pill{background:#292a32}
 .check{background:#1b1c21}
 }
+.verification-backdrop{
+position:fixed;
+inset:0;
+background:rgba(0,0,0,.45);
+display:flex;
+align-items:center;
+justify-content:center;
+padding:20px;
+z-index:1000;
+}
+
+.verification-card{
+width:min(520px,100%);
+max-height:90vh;
+overflow:auto;
+background:var(--card);
+color:var(--text);
+border-radius:22px;
+padding:22px;
+box-shadow:0 20px 60px rgba(0,0,0,.25);
+}
+
+.verification-card h2{
+margin:0 0 6px;
+}
+
+.verify-task{
+font-weight:700;
+margin:0 0 8px;
+}
+
+.verification-card label{
+display:block;
+font-size:13px;
+font-weight:600;
+color:var(--muted);
+margin:14px 0 5px;
+}
+
+.verification-card input{
+width:100%;
+box-sizing:border-box;
+padding:12px;
+border:1px solid #dfe0e7;
+border-radius:12px;
+background:var(--card);
+color:var(--text);
+font:inherit;
+margin:5px 0 10px;
+}
+
+.verification-actions{
+display:flex;
+gap:8px;
+margin-top:14px;
+}
+
+.verification-actions button{
+flex:1;
+border:0;
+border-radius:12px;
+padding:12px;
+font-weight:650;
+cursor:pointer;
+}
+
+.verify-cancel{
+background:#eeeef5;
+color:var(--text);
+}
+
+.verify-submit{
+background:var(--accent);
+color:white;
+}
 </style>
 </head>
 
@@ -274,7 +349,7 @@ html+=`
 
 <button class="check ${done?"done":""}"
 ${canComplete?"":"disabled"}
-onclick="toggle('${k.replaceAll("'","\\'")}')">
+onclick="${["career","planning"].includes(t[2]) ? `startVerification('${k.replaceAll("'","\\'")}')` : `toggle('${k.replaceAll("'","\\'")}')`}"
 
 ${done?"✓":""}
 
@@ -304,6 +379,189 @@ state.done[k]=!state.done[k];
 persist();
 
 render();
+}
+function verificationQuestions(title){
+
+const x=title.toLowerCase();
+
+if(x.includes("job application")){
+
+return [
+["company","Which company did you apply to?","e.g. Infosys"],
+["role","What role did you apply to?","e.g. Software Engineer"],
+["evidence","What did you actually submit or do?","e.g. Resume + application submitted"]
+];
+
+}
+function startVerification(k){
+
+let task=null;
+
+const today=new Date();
+
+for(const t of tasksFor()){
+
+if(key(today,t)===k){
+
+task=t;
+
+break;
+
+}
+
+}
+
+if(!task)return;
+
+const questions=verificationQuestions(task[1]);
+
+let fields="";
+
+questions.forEach(q=>{
+
+fields+=`
+<label for="verify_${q[0]}">${q[1]}</label>
+<input
+id="verify_${q[0]}"
+placeholder="${q[2]}"
+autocomplete="off">
+`;
+
+});
+
+const modal=document.createElement("div");
+
+modal.id="verificationModal";
+
+modal.className="verification-backdrop";
+
+modal.innerHTML=`
+
+<div class="verification-card">
+
+<h2>Quick verification</h2>
+
+<p class="verify-task">
+${task[0]} — ${task[1]}
+</p>
+
+<div class="small">
+Write a short record of what you actually did.
+</div>
+
+${fields}
+
+<div class="verification-actions">
+
+<button
+class="verify-cancel"
+onclick="closeVerification()">
+Cancel
+</button>
+
+<button
+class="verify-submit"
+onclick="submitVerification('${k.replaceAll("'","\\'")}')">
+Submit & Complete
+</button>
+
+</div>
+
+</div>
+`;
+
+document.body.appendChild(modal);
+
+document
+.getElementById("verify_"+questions[0][0])
+.focus();
+
+}
+function closeVerification(){
+
+const modal=document.getElementById("verificationModal");
+
+if(modal){
+modal.remove();
+}
+
+}
+
+
+function submitVerification(k){
+
+const parts=k.split("|");
+
+const title=parts.slice(2).join("|");
+
+const questions=verificationQuestions(title);
+
+const evidence={};
+
+for(const q of questions){
+
+const input=document.getElementById("verify_"+q[0]);
+
+if(!input || !input.value.trim()){
+
+alert("Please answer all verification questions.");
+
+if(input){
+input.focus();
+}
+
+return;
+}
+
+evidence[q[0]]=input.value.trim();
+
+}
+
+if(!state.verification){
+state.verification={};
+}
+
+state.verification[k]={
+completedAt:new Date().toISOString(),
+answers:evidence
+};
+
+state.done[k]=true;
+
+persist();
+
+closeVerification();
+
+render();
+
+}
+
+if(x.includes("project") || x.includes("practical work")){
+
+return [
+["work","What did you work on?","e.g. Login API"],
+["completed","What did you complete today?","e.g. Added validation"],
+["next","What is the next step?","e.g. Test the API"]
+];
+
+}
+
+if(x.includes("interview")){
+
+return [
+["topic","What did you prepare?","e.g. DBMS + HR questions"],
+["learning","What did you improve or learn?","e.g. Improved normalization"],
+["next","What will you prepare next?","e.g. OS interview questions"]
+];
+
+}
+
+return [
+["topic","What did you work on?","e.g. Java arrays"],
+["learning","What did you learn or accomplish?","e.g. Solved 5 problems"],
+["next","What is the next step?","e.g. Practice linked lists"]
+];
+
 }
 
 function renderRoutine(){
