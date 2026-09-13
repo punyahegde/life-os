@@ -23,8 +23,7 @@ const now = new Date();
 const fmt = new Intl.DateTimeFormat('en-GB', {
   timeZone: 'Asia/Kolkata',
   hour: '2-digit',
-  minute: '2-digit',
-  weekday: 'numeric'
+  minute: '2-digit'
 });
 
 const parts = fmt.formatToParts(now);
