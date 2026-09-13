@@ -1,0 +1,26 @@
+name: Life OS Notifications
+
+on:
+  schedule:
+    - cron: '*/5 * * * *'
+  workflow_dispatch:
+
+jobs:
+  notify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - run: npm install --no-audit --no-fund
+
+      - name: Send due Life OS notification
+        env:
+          PUSH_SUBSCRIPTION: ${{ secrets.PUSH_SUBSCRIPTION }}
+          VAPID_PRIVATE_KEY: ${{ secrets.VAPID_PRIVATE_KEY }}
+          VAPID_PUBLIC_KEY: BHD3ENmNPEofYIEoktlUbtzj_tkR0VZDO9xlUSsyAlzSmA8LJ33GnnjErU0fc_hwyev5jqvv2Pu_3RVwu7N52vA
+        run: node scripts/send-notification.js
