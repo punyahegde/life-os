@@ -1,0 +1,102 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#f6f7fb">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Life OS">
+<link rel="manifest" href="manifest.webmanifest">
+<title>Life OS</title>
+<style>
+:root{--bg:#f6f7fb;--card:#fff;--text:#17181c;--muted:#737780;--accent:#5b5bd6;--line:#e8e9ef;--green:#198754}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"SF Pro Display","Segoe UI",sans-serif}
+header{position:sticky;top:0;z-index:5;background:rgba(246,247,251,.92);backdrop-filter:blur(18px);padding:18px 18px 10px;border-bottom:1px solid var(--line)}
+h1{margin:0;font-size:30px}.sub{color:var(--muted);margin-top:4px}.tabs{position:fixed;bottom:0;left:0;right:0;height:76px;background:rgba(255,255,255,.96);border-top:1px solid var(--line);display:flex;z-index:10;padding-bottom:env(safe-area-inset-bottom)}
+.tab{flex:1;border:0;background:none;font-size:11px;color:var(--muted);padding:9px 2px}.tab.active{color:var(--accent);font-weight:700}.tab span{display:block;font-size:23px;margin-bottom:2px}
+main{padding:16px 16px 96px;max-width:760px;margin:auto}.card{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:16px;margin-bottom:14px;box-shadow:0 2px 12px rgba(0,0,0,.035)}
+.progress{height:10px;background:#ececf3;border-radius:10px;overflow:hidden}.bar{height:100%;background:var(--accent);border-radius:10px;transition:.25s}
+.row{display:flex;align-items:center;gap:12px;padding:13px 0;border-bottom:1px solid var(--line)}.row:last-child{border-bottom:0}.check{width:25px;height:25px;border:2px solid #b9bbc5;border-radius:50%;background:white;flex:none}.check.done{background:var(--green);border-color:var(--green);color:white}.task{flex:1}.task.done{text-decoration:line-through;color:var(--muted)}.time{font-size:12px;color:var(--muted)}.pill{font-size:11px;padding:5px 8px;border-radius:10px;background:#f0f0f7;color:var(--muted)}
+h2{font-size:18px;margin:20px 0 10px}.btn{border:0;border-radius:12px;padding:11px 14px;background:var(--accent);color:white;font-weight:650}.btn.secondary{background:#eeeef5;color:var(--text)}.btn.danger{background:#fff0f0;color:#b42318}.actions{display:flex;gap:8px;flex-wrap:wrap}
+input,select,textarea{width:100%;padding:12px;border:1px solid #dfe0e7;border-radius:12px;background:white;font:inherit;margin:5px 0 10px}label{font-size:13px;color:var(--muted)}
+.job{padding:13px 0;border-bottom:1px solid var(--line)}.job:last-child{border-bottom:0}.jobtop{display:flex;justify-content:space-between;gap:10px}.small{font-size:12px;color:var(--muted)}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}.stat{padding:15px;background:#fafaff;border-radius:14px}.stat b{display:block;font-size:25px}.empty{text-align:center;color:var(--muted);padding:28px}
+dialog{border:0;border-radius:20px;width:min(92%,520px);padding:0;box-shadow:0 20px 60px rgba(0,0,0,.25)}dialog::backdrop{background:rgba(0,0,0,.35)}.modal{padding:20px}
+@media(prefers-color-scheme:dark){:root{--bg:#111216;--card:#1b1c21;--text:#f4f4f6;--muted:#a7a9b2;--line:#303139}header,.tabs{background:rgba(27,28,33,.94)}input,select,textarea{background:#202127;color:var(--text);border-color:#383942}.stat{background:#202127}.pill{background:#292a32}.check{background:#1b1c21}}
+</style>
+</head>
+<body>
+<header><h1 id="title">Today</h1><div class="sub" id="date"></div></header>
+<main id="app"></main>
+<nav class="tabs">
+<button class="tab active" data-tab="today"><span>☀️</span>Today</button>
+<button class="tab" data-tab="routine"><span>📅</span>Routine</button>
+<button class="tab" data-tab="career"><span>💼</span>Career</button>
+<button class="tab" data-tab="progress"><span>📈</span>Progress</button>
+<button class="tab" data-tab="settings"><span>⚙️</span>Settings</button>
+</nav>
+<dialog id="jobDialog"><div class="modal"><h2>Add job application</h2>
+<label>Company</label><input id="jc"><label>Role</label><input id="jr">
+<label>Status</label><select id="js"><option>Saved</option><option>Applied</option><option>Assessment</option><option>Interview</option><option>Selected</option><option>Rejected</option></select>
+<label>Notes</label><textarea id="jn" rows="3"></textarea>
+<div class="actions"><button class="btn" onclick="saveJob()">Save</button><button class="btn secondary" onclick="jobDialog.close()">Cancel</button></div></div></dialog>
+<script>
+const weekday = [
+["06:00","Wake up + drink water","morning",1],["06:10","Workout","health",1],["06:45","Shower + get ready","personal",0],["07:30","Breakfast + travel","morning",0],
+["09:00","University / classes","university",1],["13:00","Lunch + relax","health",0],["14:00","Self-study / placement preparation","career",1],["16:00","Travel back to PG","travel",0],
+["16:45","Freshen up + rest","rest",0],["17:30","Focused study","career",1],["19:00","Break + friends / phone","personal",0],["19:30","Job applications","career",1],
+["20:00","Dinner + relax","health",0],["21:00","Study / projects / interview prep","career",1],["22:30","Personal time + prepare for tomorrow","personal",1],["23:00","Sleep","sleep",0]];
+const saturday=[["06:30","Wake up + drink water","morning",1],["06:40","Workout","health",1],["07:30","Shower + breakfast","morning",0],["09:00","Deep study","career",1],["11:30","Projects / practical work","career",1],["13:00","Lunch + relax","health",0],["14:00","Job applications + interview prep","career",1],["16:00","Free time / friends / hobbies","personal",0],["18:00","Study / revision","career",1],["20:00","Dinner","health",0],["21:00","Relax / friends","personal",0],["23:00","Sleep","sleep",0]];
+const sunday=[["07:00","Wake up","morning",1],["07:10","Walk / light workout","health",1],["08:00","Shower + breakfast","morning",0],["09:00","Weekly revision / pending work","career",1],["11:00","Room + laundry + personal tasks","personal",0],["13:00","Lunch","health",0],["14:00","Friends / hobbies / outing / relax","personal",0],["17:00","Job applications","career",1],["18:00","Plan upcoming week","planning",1],["19:00","Dinner + family / friends","personal",0],["21:00","Light study / reading","career",0],["22:30","Prepare for Monday","planning",1],["23:00","Sleep","sleep",0]];
+const routines={1:sunday,2:weekday,3:weekday,4:weekday,5:weekday,6:weekday,7:saturday};
+let state=JSON.parse(localStorage.getItem("lifeos")||"null")||{done:{},jobs:[],custom:{},notifications:true};
+function persist(){localStorage.setItem("lifeos",JSON.stringify(state))}
+function key(d,t){return d.toISOString().slice(0,10)+"|"+t[0]+"|"+t[1]}
+function day(){return new Date().getDay()+1}
+function tasksFor(n=day()){return (state.custom[n]||routines[n]).map((x,i)=>({...x,i}))}
+function pct(ts){return ts.length?ts.filter(t=>state.done[key(new Date(),t)]).length/ts.length:0}
+function renderToday(){
+ const ts=tasksFor();let p=pct(ts), d=new Date();
+ document.getElementById("title").textContent="Today";document.getElementById("date").textContent=d.toLocaleDateString(undefined,{weekday:"long",month:"long",day:"numeric"});
+ let html=`<div class="card"><b>${Math.round(p*100)}% complete</b><div class="progress" style="margin:10px 0"><div class="bar" style="width:${p*100}%"></div></div><div class="small">${ts.filter(t=>state.done[key(d,t)]).length} of ${ts.length} tasks completed</div></div>`;
+ let groups={};ts.forEach(t=>(groups[t[0].slice(0,2)<12?"Morning":t[0].slice(0,2)<17?"Afternoon":t[0].slice(0,2)<21?"Evening":"Night"]??=[]).push(t));
+ for(const [g,a] of Object.entries(groups)){html+=`<h2>${g}</h2><div class="card">`;a.forEach(t=>{let k=key(d,t),done=!!state.done[k];html+=`<div class="row"><button class="check ${done?"done":""}" onclick="toggle('${k.replaceAll("'","\\'")}')">${done?"✓":""}</button><div class="task ${done?"done":""}"><div>${t[1]}</div><div class="time">${t[0]}</div></div><span class="pill">${t[2]}</span></div>`});html+="</div>"}document.getElementById("app").innerHTML=html;
+}
+function toggle(k){state.done[k]=!state.done[k];persist();render()}
+function renderRoutine(){
+ document.getElementById("title").textContent="Routine";document.getElementById("date").textContent="Weekly schedule";
+ let html=`<div class="card"><div class="small">Your weekly routine from the Antigravity Life OS build. Tap a day to view its schedule.</div></div>`;
+ for(let n=1;n<=7;n++){let name=["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"][n-1];let ts=tasksFor(n);html+=`<details class="card" ${n===day()?"open":""}><summary><b>${name}</b> <span class="small">${ts.length} tasks</span></summary>`;
+ ts.forEach(t=>html+=`<div class="row"><div class="task"><div>${t[1]}</div><div class="time">${t[0]} · ${t[2]}</div></div><span>${t[3]?"🔔":""}</span></div>`);html+="</details>"}document.getElementById("app").innerHTML=html;
+}
+function renderCareer(){
+ document.getElementById("title").textContent="Career";document.getElementById("date").textContent="Applications and study";
+ let week=state.jobs.filter(j=>(Date.now()-new Date(j.date))<7*864e5).length;
+ let html=`<div class="grid"><div class="stat"><b>${week}</b><span class="small">This week</span></div><div class="stat"><b>${state.jobs.length}</b><span class="small">Total applications</span></div></div><div class="actions" style="margin:14px 0"><button class="btn" onclick="jobDialog.showModal()">+ Add application</button></div><div class="card">`;
+ if(!state.jobs.length) html+=`<div class="empty">No applications yet.</div>`; else [...state.jobs].reverse().forEach((j,i)=>{html+=`<div class="job"><div class="jobtop"><b>${esc(j.company)}</b><span class="pill">${j.status}</span></div><div>${esc(j.role)}</div><div class="small">${new Date(j.date).toLocaleDateString()}${j.notes?" · "+esc(j.notes):""}</div><button class="btn danger" style="margin-top:8px;padding:7px 10px" onclick="deleteJob(${state.jobs.indexOf(j)})">Delete</button></div>`});html+="</div>";document.getElementById("app").innerHTML=html;
+}
+function saveJob(){let j={company:jc.value.trim(),role:jr.value.trim(),status:js.value,notes:jn.value.trim(),date:new Date().toISOString()};if(!j.company||!j.role)return;state.jobs.push(j);persist();jobDialog.close();jc.value=jr.value=jn.value="";renderCareer()}
+function deleteJob(i){state.jobs.splice(i,1);persist();renderCareer()}
+function esc(s){return String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]))}
+function renderProgress(){
+ document.getElementById("title").textContent="Progress";document.getElementById("date").textContent="Your consistency";
+ let today=pct(tasksFor()), days=[];for(let i=6;i>=0;i--){let d=new Date();d.setDate(d.getDate()-i);let n=d.getDay()+1,ts=tasksFor(n),done=ts.filter(t=>state.done[key(d,t)]).length;days.push({d,p:ts.length?done/ts.length:0})}
+ let avg=days.reduce((a,x)=>a+x.p,0)/7;let streak=0;for(let i=0;i<365;i++){let d=new Date();d.setDate(d.getDate()-i);let ts=tasksFor(d.getDay()+1);if(ts.length&&ts.every(t=>state.done[key(d,t)]))streak++;else break}
+ let html=`<div class="card"><b>Today</b><div class="progress" style="margin:10px 0"><div class="bar" style="width:${today*100}%"></div></div><b>${Math.round(today*100)}%</b><div class="small">${tasksFor().filter(t=>state.done[key(new Date(),t)]).length} tasks completed</div></div><div class="grid"><div class="stat"><b>${Math.round(avg*100)}%</b><span class="small">7-day average</span></div><div class="stat"><b>🔥 ${streak}</b><span class="small">Current full-day streak</span></div></div><h2>Last 7 days</h2><div class="card">`;
+ days.forEach(x=>html+=`<div class="row"><div class="task">${x.d.toLocaleDateString(undefined,{weekday:"short"})}</div><b>${Math.round(x.p*100)}%</b></div>`);html+="</div>";document.getElementById("app").innerHTML=html;
+}
+function renderSettings(){
+ document.getElementById("title").textContent="Settings";document.getElementById("date").textContent="Life OS preferences";
+ document.getElementById("app").innerHTML=`<div class="card"><h2 style="margin-top:0">Notifications</h2><p class="small">Enable browser notifications for the routine. Notifications work after this web app is installed on the iPhone Home Screen and permission is granted.</p><button class="btn" onclick="enableNotifications()">${state.notifications?"Enable / refresh notifications":"Enable notifications"}</button></div>
+ <div class="card"><h2 style="margin-top:0">Data</h2><div class="actions"><button class="btn secondary" onclick="exportData()">Export data</button><button class="btn danger" onclick="resetData()">Reset to defaults</button></div></div>
+ <div class="card"><h2 style="margin-top:0">About</h2><p class="small">Life OS is an offline-first routine, career and progress companion based on the exact routine structure from the Antigravity build.</p></div>`;
+}
+function exportData(){let a=document.createElement("a");a.href=URL.createObjectURL(new Blob([JSON.stringify(state,null,2)],{type:"application/json"}));a.download="lifeos-backup.json";a.click()}
+function resetData(){if(confirm("Reset Life OS data?")){state={done:{},jobs:[],custom:{},notifications:true};persist();render()}}
+async function enableNotifications(){if(!("Notification"in window)){alert("Notifications are not supported in this browser.");return}let p=await Notification.requestPermission();if(p==="granted"){state.notifications=true;persist();alert("Notifications enabled. For reliable iPhone web-app notifications, add Life OS to the Home Screen first.")}else alert("Notification permission was not granted.")}
+function render(){let t=location.hash.slice(1)||"today";document.querySelectorAll(".tab").forEach(b=>b.classList.toggle("active",b.dataset.tab===t));({today:renderToday,routine:renderRoutine,career:renderCareer,progress:renderProgress,settings:renderSettings}[t]||renderToday)()}
+document.querySelectorAll(".tab").forEach(b=>b.onclick=()=>{location.hash=b.dataset.tab});window.onhashchange=render;render();
+if("serviceWorker"in navigator)navigator.serviceWorker.register("sw.js").catch(()=>{});
+</script>
+</body></html>
