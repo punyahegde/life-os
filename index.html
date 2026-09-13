@@ -88,13 +88,34 @@ function renderProgress(){
 }
 function renderSettings(){
  document.getElementById("title").textContent="Settings";document.getElementById("date").textContent="Life OS preferences";
- document.getElementById("app").innerHTML=`<div class="card"><h2 style="margin-top:0">Notifications</h2><p class="small">Enable browser notifications for the routine. Notifications work after this web app is installed on the iPhone Home Screen and permission is granted.</p><button class="btn" onclick="enableNotifications()">${state.notifications?"Enable / refresh notifications":"Enable notifications"}</button></div>
+ document.getElementById("app").innerHTML=`<div class="card"><h2 style="margin-top:0">Notifications</h2><p class="small">Enable real push notifications for your routine. Keep Life OS installed on your iPhone Home Screen.</p><div class="actions"><button class="btn" onclick="enablePush()">🔔 Set up push notifications</button><button class="btn secondary" onclick="testNotification()">Test notification</button></div><p id="pushStatus" class="small" style="margin-top:10px"></p></div>
  <div class="card"><h2 style="margin-top:0">Data</h2><div class="actions"><button class="btn secondary" onclick="exportData()">Export data</button><button class="btn danger" onclick="resetData()">Reset to defaults</button></div></div>
  <div class="card"><h2 style="margin-top:0">About</h2><p class="small">Life OS is an offline-first routine, career and progress companion based on the exact routine structure from the Antigravity build.</p></div>`;
 }
 function exportData(){let a=document.createElement("a");a.href=URL.createObjectURL(new Blob([JSON.stringify(state,null,2)],{type:"application/json"}));a.download="lifeos-backup.json";a.click()}
 function resetData(){if(confirm("Reset Life OS data?")){state={done:{},jobs:[],custom:{},notifications:true};persist();render()}}
 async function enableNotifications(){if(!("Notification"in window)){alert("Notifications are not supported in this browser.");return}let p=await Notification.requestPermission();if(p==="granted"){state.notifications=true;persist();alert("Notifications enabled. For reliable iPhone web-app notifications, add Life OS to the Home Screen first.")}else alert("Notification permission was not granted.")}
+const VAPID_PUBLIC_KEY="BHD3ENmNPEofYIEoktlUbtzj_tkR0VZDO9xlUSsyAlzSmA8LJ33GnnjErU0fc_hwyev5jqvv2Pu_3RVwu7N52vA";
+function urlBase64ToUint8Array(base64String){const padding="=".repeat((4-base64String.length%4)%4),base64=(base64String+padding).replace(/-/g,"+").replace(/_/g,"/");const raw=atob(base64);return Uint8Array.from([...raw].map(c=>c.charCodeAt(0)))}
+async function enablePush(){
+ if(!('serviceWorker'in navigator)||!('PushManager'in window)||!('Notification'in window)){alert('Push notifications are not supported here. Open Life OS from the iPhone Home Screen.');return}
+ try{
+  const permission=await Notification.requestPermission(); if(permission!=='granted'){alert('Notification permission was not granted.');return}
+  const reg=await navigator.serviceWorker.ready;
+  let sub=await reg.pushManager.getSubscription();
+  if(!sub) sub=await reg.pushManager.subscribe({userVisibleOnly:true,applicationServerKey:urlBase64ToUint8Array(VAPID_PUBLIC_KEY)});
+  localStorage.setItem('lifeosPushSubscription',JSON.stringify(sub));
+  const text=JSON.stringify(sub);
+  try{await navigator.clipboard.writeText(text)}catch{}
+  const status=document.getElementById('pushStatus'); if(status) status.textContent='Push subscription created. It was copied to your clipboard. Add it to GitHub Secrets as PUSH_SUBSCRIPTION.';
+  alert('Push setup created. The subscription JSON was copied to your clipboard. Next we will add it to GitHub Secrets.');
+ }catch(e){alert('Push setup failed: '+e.message)}
+}
+async function testNotification(){
+ if(Notification.permission!=='granted'){await enablePush();return}
+ const reg=await navigator.serviceWorker.ready;
+ reg.showNotification('Life OS test',{body:'Notifications are working on this iPhone.',icon:'icon.svg',badge:'icon.svg',tag:'lifeos-test'});
+}
 function render(){let t=location.hash.slice(1)||"today";document.querySelectorAll(".tab").forEach(b=>b.classList.toggle("active",b.dataset.tab===t));({today:renderToday,routine:renderRoutine,career:renderCareer,progress:renderProgress,settings:renderSettings}[t]||renderToday)()}
 document.querySelectorAll(".tab").forEach(b=>b.onclick=()=>{location.hash=b.dataset.tab});window.onhashchange=render;render();
 if("serviceWorker"in navigator)navigator.serviceWorker.register("sw.js").catch(()=>{});
