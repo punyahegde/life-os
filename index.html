@@ -349,7 +349,7 @@ html+=`
 
 <button class="check ${done?"done":""}"
 ${canComplete?"":"disabled"}
-onclick="${["career","planning"].includes(t[2]) ? `startVerification('${k.replaceAll("'","\\'")}')` : `toggle('${k.replaceAll("'","\\'")}')`}"
+onclick="${["career","planning"].includes(t[2]) ? "startVerification('" + k.replaceAll("'","\\'") + "')" : "toggle('" + k.replaceAll("'","\\'") + "')"}"
 
 ${done?"✓":""}
 
