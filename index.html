@@ -95,7 +95,7 @@ function renderSettings(){
 function exportData(){let a=document.createElement("a");a.href=URL.createObjectURL(new Blob([JSON.stringify(state,null,2)],{type:"application/json"}));a.download="lifeos-backup.json";a.click()}
 function resetData(){if(confirm("Reset Life OS data?")){state={done:{},jobs:[],custom:{},notifications:true};persist();render()}}
 async function enableNotifications(){if(!("Notification"in window)){alert("Notifications are not supported in this browser.");return}let p=await Notification.requestPermission();if(p==="granted"){state.notifications=true;persist();alert("Notifications enabled. For reliable iPhone web-app notifications, add Life OS to the Home Screen first.")}else alert("Notification permission was not granted.")}
-const VAPID_PUBLIC_KEY="BHD3ENmNPEofYIEoktlUbtzj_tkR0VZDO9xlUSsyAlzSmA8LJ33GnnjErU0fc_hwyev5jqvv2Pu_3RVwu7N52vA";
+const VAPID_PUBLIC_KEY="BCYUBwie6x40avpHbvjNeSwI0iI5xg8cjiDfpJsD6TFwmga7VpQX7ZUgRO4Kue3mT91WQQxkWfJKo88eX9il8WA";
 function urlBase64ToUint8Array(base64String){const padding="=".repeat((4-base64String.length%4)%4),base64=(base64String+padding).replace(/-/g,"+").replace(/_/g,"/");const raw=atob(base64);return Uint8Array.from([...raw].map(c=>c.charCodeAt(0)))}
 async function enablePush(){
  if(!('serviceWorker'in navigator)||!('PushManager'in window)||!('Notification'in window)){alert('Push notifications are not supported here. Open Life OS from the iPhone Home Screen.');return}
